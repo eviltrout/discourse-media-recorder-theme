@@ -1,10 +1,10 @@
-import RecordRTC from "vendor/record-rtc";
 import {ajax} from "discourse/lib/ajax";
 
 export default Ember.Component.extend({
     videoElement: null,
     error: null,
     recording: false,
+    recordedChunks: [],
 
     didInsertElement(){
         if(!navigator.getDisplayMedia && !navigator.mediaDevices.getDisplayMedia) {
@@ -28,33 +28,38 @@ export default Ember.Component.extend({
         }
     },
 
+    dataAvailable(e){
+        this.recordedChunks.push(e.data);
+    },
+
+    recordStopped(e){
+        var blob = new Blob(this.recordedChunks, { 'type' : this.recorder.mimeType });
+        this.set("recordedChunks", [])
+
+        this.videoElement.src = this.videoElement.srcObject = null;
+        this.set("recordedBlob", blob);
+        this.videoElement.src = URL.createObjectURL(this.recordedBlob);
+        this.stream.stop();
+        this.set("recorder", null);
+        this.set("recording", false);
+    },
+
     actions:{
         start(){
             this.set("recording", true);
+            this.set("recordedChunks", []);
             navigator.mediaDevices.getDisplayMedia({video: true}).then((stream) => {
                 this.set("stream", stream);
                 this.videoElement.srcObject = stream;
-                this.set("recorder", new RecordRTC(stream, {
-                    type: 'video',
-                }));
-                this.recorder.startRecording();
-                this.timer = Ember.run.later(this, this.updateFileSize, 500);
+                this.set("recorder", new MediaRecorder(stream));
+                this.recorder.ondataavailable = (e) => this.dataAvailable(e);
+                this.recorder.onstop = (e) => this.recordStopped(e);
+                this.recorder.start();
             });
         },
+
         stop(){
-            this.recorder.stopRecording(() => {
-                console.log(this.recorder.toURL())
-                this.videoElement.src = this.videoElement.srcObject = null;
-                this.set("recordedBlob", this.recorder.getBlob());
-                this.videoElement.src = URL.createObjectURL(this.recordedBlob);
-                this.stream.stop();
-                this.recorder.destroy();
-                this.set("recorder", null);
-                this.set("recording", false);
-                if(this.timer){
-                    Ember.run.cancel(timer);
-                }
-            });   
+            this.recorder.stop();
         },
         upload(){
             const data = new FormData();
