@@ -7,11 +7,6 @@ export default Ember.Component.extend({
     recordedChunks: [],
 
     didInsertElement(){
-        if(!navigator.getDisplayMedia && !navigator.mediaDevices.getDisplayMedia) {
-            this.error = 'Your browser does NOT support the getDisplayMedia API.';
-            return;
-        }
-
         this.videoElement = this.element.querySelector("video");
         this.set("recording", false);
     },
@@ -39,7 +34,7 @@ export default Ember.Component.extend({
         this.videoElement.src = this.videoElement.srcObject = null;
         this.set("recordedBlob", blob);
         this.videoElement.src = URL.createObjectURL(this.recordedBlob);
-        this.stream.stop();
+        this.stream.getTracks().forEach( track => track.stop() );
         this.set("recorder", null);
         this.set("recording", false);
     },
@@ -51,7 +46,7 @@ export default Ember.Component.extend({
             navigator.mediaDevices.getDisplayMedia({video: true}).then((stream) => {
                 this.set("stream", stream);
                 this.videoElement.srcObject = stream;
-                this.set("recorder", new MediaRecorder(stream));
+                this.set("recorder", new MediaRecorder(stream, {mimeType: "video/webm;codecs=vp8"}));
                 this.recorder.ondataavailable = (e) => this.dataAvailable(e);
                 this.recorder.onstop = (e) => this.recordStopped(e);
                 this.recorder.start();

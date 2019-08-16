@@ -5,6 +5,7 @@ export default {
   name: "media-recorder",
   initialize(){
     withPluginApi("0.8.7", api => {
+        if(! (window.hasOwnProperty("MediaRecorder") && navigator.mediaDevices.getDisplayMedia)) return;
         api.onToolbarCreate(toolbar => {
             toolbar.addButton({
                 id: 'record-media',
