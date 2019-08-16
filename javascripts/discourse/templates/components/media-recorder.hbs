@@ -1,0 +1,17 @@
+{{#d-modal-body title=(theme-prefix "modal_title") class="media-recorder"}}
+    <div class="video-container">
+        <video controls autoplay playsinline></video>
+    </div>
+
+{{/d-modal-body}}
+
+    <div class="modal-footer">
+        {{#if this.recording}}
+            {{d-button label=(theme-prefix "stop") action=(action "stop") icon="square-full"}}
+        {{else}}
+            {{d-button label=(theme-prefix "start") action=(action "start") icon="circle" class="start-record"}} 
+        {{/if}}
+        {{#if this.recordedBlob}}
+            {{d-button label=(theme-prefix "upload") action=(action "upload") class="btn-primary" icon="upload"}}
+        {{/if}}
+    </div>
