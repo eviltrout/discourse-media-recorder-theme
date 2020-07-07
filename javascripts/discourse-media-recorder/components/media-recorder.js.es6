@@ -1,4 +1,5 @@
-import {ajax} from "discourse/lib/ajax";
+import { ajax } from "discourse/lib/ajax";
+import getURL from "discourse-common/lib/get-url";
 
 export default Ember.Component.extend({
     videoElement: null,
@@ -62,11 +63,11 @@ export default Ember.Component.extend({
             data.append('files[]', this.recordedBlob, "screen.webm");
             data.append('type', "composer");
 
-            fetch(Discourse.getURL("/uploads.json"), {
+            fetch(getURL("/uploads.json"), {
                 method: 'POST',
                 body: data
             }).then(response => response.json()).then(upload=> {
-                const url = window.location.origin + upload.short_url.replace("upload://", Discourse.getURL('/uploads/short-url/'));
+                const url = window.location.origin + upload.short_url.replace("upload://", getURL('/uploads/short-url/'));
                 this.appEvents.trigger(
                     "composer:insert-text",
                     `\n${url}\n`
